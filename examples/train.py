@@ -12,7 +12,7 @@ def main():
     parser.add_argument(
         "--algo",
         type=str,
-        default="happo",
+        default="mappo",
         choices=[
             "happo",
             "hatrpo",
@@ -30,7 +30,7 @@ def main():
     parser.add_argument(
         "--env",
         type=str,
-        default="pettingzoo_mpe",
+        default="multicamera",
         choices=[
             "smac",
             "mamujoco",
@@ -40,6 +40,7 @@ def main():
             "dexhands",
             "smacv2",
             "lag",
+            "multicamera",
         ],
         help="Environment name. Choose from: smac, mamujoco, pettingzoo_mpe, gym, football, dexhands, smacv2, lag.",
     )
