@@ -89,9 +89,9 @@ class OnPolicyBaseRunner:
             )
         self.num_agents = get_num_agents(args["env"], env_args, self.envs)
 
-        print("share_observation_space: ", self.envs.share_observation_space)
-        print("observation_space: ", self.envs.observation_space)
-        print("action_space: ", self.envs.action_space)
+        print("share_observation_space 共享观测空间大小: ", self.envs.share_observation_space[0].shape)
+        print("observation_space 观测空间大小:", self.envs.observation_space[0].shape)
+        print("action_space 动作空间大小", self.envs.action_space[0].shape)
 
         # actor
         if self.share_param:
@@ -101,7 +101,7 @@ class OnPolicyBaseRunner:
                 self.envs.observation_space[0],
                 self.envs.action_space[0],
                 device=self.device,
-            )
+            ) # 共享参数只需实例单个智能体的actor网络  传入model和algo参数
             self.actor.append(agent)
             for agent_id in range(1, self.num_agents):
                 assert (
@@ -174,8 +174,8 @@ class OnPolicyBaseRunner:
             self.render()
             return
         print("start running")
-        self.warmup()
-
+        self.warmup()# warmup重置环境并填充缓冲区第一个初始状态
+        # 根据并行环境 最大步长 总步长计算epsiode
         episodes = (
             int(self.algo_args["train"]["num_env_steps"])
             // self.algo_args["train"]["episode_length"]
@@ -194,12 +194,12 @@ class OnPolicyBaseRunner:
                     for agent_id in range(self.num_agents):
                         self.actor[agent_id].lr_decay(episode, episodes)
                 self.critic.lr_decay(episode, episodes)
-
+            # 每个episode开始初始logger
             self.logger.episode_init(
                 episode
             )  # logger callback at the beginning of each episode
 
-            self.prep_rollout()  # change to eval mode
+            self.prep_rollout()  # 在采样时,将actor和critic切换到eval模式,没有梯度
             for step in range(self.algo_args["train"]["episode_length"]):
                 # Sample actions from actors and values from critics
                 (
@@ -208,7 +208,7 @@ class OnPolicyBaseRunner:
                     action_log_probs,
                     rnn_states,
                     rnn_states_critic,
-                ) = self.collect(step)
+                ) = self.collect(step) # 通过buffer中的obs等数据采样动作与估计价值, warmup中重置了环境给了buffer第一个初始状态
                 # actions: (n_threads, n_agents, action_dim)
                 (
                     obs,
@@ -237,15 +237,15 @@ class OnPolicyBaseRunner:
                     rnn_states,
                     rnn_states_critic,
                 )
-
+                # 将采样的数据给logger分析记录
                 self.logger.per_step(data)  # logger callback at each step
 
                 self.insert(data)  # insert data into buffer
-
+            # buffer填满后(一个episode的长度) 先计算每一步的累计回报以及估计,然后给train求loss  train需要另外实现,如mappo等
             # compute return and update network
             self.compute()
             self.prep_training()  # change to train mode
-
+            # 进入ma_runner 同时train actor和critic网络
             actor_train_infos, critic_train_info = self.train()
 
             # log information

@@ -23,8 +23,9 @@ class MultiCameraLogger(BaseLogger):
         )
         self.done_episodes_rewards = []
 
+        self.detected_rate = []
+        self.real_detected_rate = []
         self.coverage_rate = []
-        self.real_coverage_rate = []
 
 
     def per_step(self, data):
@@ -49,8 +50,9 @@ class MultiCameraLogger(BaseLogger):
         for i in range(self.algo_args["train"]["n_rollout_threads"]):
             if dones_env[i]:
                 self.done_episodes_rewards.append(self.train_episode_rewards[i])
+                self.detected_rate.append(infos[i][0]["detected_rate"])
+                self.real_detected_rate.append(infos[i][0]["real_detected_rate"])
                 self.coverage_rate.append(infos[i][0]["coverage_rate"])
-                self.real_coverage_rate.append(infos[i][0]["real_coverage_rate"])
                 self.train_episode_rewards[i] = 0
 
     def episode_log(
@@ -64,11 +66,7 @@ class MultiCameraLogger(BaseLogger):
         self.end = time.time()
         print("Current Time: ", time.strftime("%m-%d %H:%M:%S", time.localtime(self.end)))
         print(
-            "Env {} Task {} Algo {} Exp {} updates {}/{} episodes, total num timesteps {}/{}, FPS {}.".format(
-                self.args["env"],
-                self.task_name,
-                self.args["algo"],
-                self.args["exp_name"],
+            "Updates {}/{} episodes, total num timesteps {}/{}, FPS {}.".format(
                 self.episode,
                 self.episodes,
                 self.total_num_steps,
@@ -89,11 +87,12 @@ class MultiCameraLogger(BaseLogger):
 
         if len(self.done_episodes_rewards) > 0:
             aver_episode_rewards = np.mean(self.done_episodes_rewards)
+            aver_detected_rate = np.mean(self.detected_rate)
+            aver_real_detected_rate = np.mean(self.real_detected_rate)
             aver_coverage_rate = np.mean(self.coverage_rate)
-            aver_real_coverage_rate = np.mean(self.real_coverage_rate)
             print(
-                "Some episodes done, average episode reward is {}, average coverage rate is {}, average real coverage rate is {}.\n".format(
-                    aver_episode_rewards, aver_coverage_rate, aver_real_coverage_rate
+                "Some episodes done, average episode reward is {}, average coverage rate is {}, average real coverage rate is {},average detected rate is {}.\n".format(
+                    aver_episode_rewards, aver_detected_rate, aver_real_detected_rate,aver_coverage_rate
                 )
             )
             self.writter.add_scalars(
@@ -102,18 +101,25 @@ class MultiCameraLogger(BaseLogger):
                 self.total_num_steps,
             )
             self.writter.add_scalars(
-                "coverage_rate",
-                {"aver_coverage_rate": aver_coverage_rate},
+                "_rate",
+                {"aver_coverage_rate": aver_detected_rate},
                 self.total_num_steps,
             )
             self.writter.add_scalars(
                 "real_coverage_rate",
-                {"aver_real_coverage_rate": aver_real_coverage_rate},
+                {"aver_real_coverage_rate": aver_real_detected_rate},
+                self.total_num_steps,
+            )
+
+            self.writter.add_scalars(
+                "detected_rate",
+                {"aver_detected_rate": aver_coverage_rate},
                 self.total_num_steps,
             )
 
             self.done_episodes_rewards = []
-            self.real_coverage_rate = []
+            self.real_detected_rate = []
+            self.detected_rate = []
             self.coverage_rate = []
 
 

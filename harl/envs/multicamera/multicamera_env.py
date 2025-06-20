@@ -16,13 +16,13 @@ class MultiCameraEnv:
         else:
             self.discrete = True
 
-        if "max_cycles" in self.args:
-            self.max_cycles = self.args["max_cycles"]
-            self.args["max_cycles"] += 1
-        else:
-            self.max_cycles = 1000
-            self.args["max_cycles"] = 1001
-        self.cur_step = 0
+        # if "max_cycles" in self.args:
+        #     self.max_cycles = self.args["max_cycles"]
+        #     self.args["max_cycles"] += 1
+        # else:
+        #     self.max_cycles = 1000
+        #     self.args["max_cycles"] = 1001
+        # self.cur_step = 0
         self.env.reset()
 
     def repeat(self, a):
@@ -36,11 +36,13 @@ class MultiCameraEnv:
             obs, rew, done, info = self.env.step(actions.flatten()[0])
         else:
             obs, rew, done, info = self.env.step(actions)
-        self.cur_step += 1
+        # self.cur_step += 1
         obs = list(obs)
         done = self.repeat(done)
         rew = self.repeat([rew])
         s_obs = self.repeat(self.env.state())
+        for agent in range(self.n_agents):
+            info[agent]["bad_transition"] = True
         return (
             obs,
             s_obs,
@@ -53,7 +55,7 @@ class MultiCameraEnv:
     def reset(self):
         """Returns initial observations and states"""
         self._seed+=1
-        self.cur_step = 0
+        # self.cur_step = 0
         obs = list(self.env.reset(seed=self._seed))
         s_obs = self.repeat(self.env.state())
         return obs, s_obs, self.get_avail_actions()
