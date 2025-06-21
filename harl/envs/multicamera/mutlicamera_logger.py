@@ -91,8 +91,8 @@ class MultiCameraLogger(BaseLogger):
             aver_real_detected_rate = np.mean(self.real_detected_rate)
             aver_coverage_rate = np.mean(self.coverage_rate)
             print(
-                "Some episodes done, average episode reward is {}, average coverage rate is {}, average real coverage rate is {},average detected rate is {}.\n".format(
-                    aver_episode_rewards, aver_detected_rate, aver_real_detected_rate,aver_coverage_rate
+                "{}: average coverage rate is {}, average real coverage rate is {},average detected rate is {}.\n".format(
+                self.env_args["scenario"], aver_detected_rate, aver_real_detected_rate,aver_coverage_rate
                 )
             )
             self.writter.add_scalars(
@@ -101,19 +101,19 @@ class MultiCameraLogger(BaseLogger):
                 self.total_num_steps,
             )
             self.writter.add_scalars(
-                "_rate",
-                {"aver_coverage_rate": aver_detected_rate},
+                "detected_rate",
+                {"aver_detected_rate": aver_detected_rate},
                 self.total_num_steps,
             )
             self.writter.add_scalars(
-                "real_coverage_rate",
-                {"aver_real_coverage_rate": aver_real_detected_rate},
+                "real_detected_rate",
+                {"aver_real_detected_rate": aver_real_detected_rate},
                 self.total_num_steps,
             )
 
             self.writter.add_scalars(
-                "detected_rate",
-                {"aver_detected_rate": aver_coverage_rate},
+                "coverage_rate",
+                {"aver_coverage_rate": aver_coverage_rate},
                 self.total_num_steps,
             )
 
