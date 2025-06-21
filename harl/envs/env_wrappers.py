@@ -258,6 +258,7 @@ class ShareSubprocVecEnv(ShareVecEnv):
         self.waiting = True
 
     def step_wait(self):
+        # 调用shareworker 去执行step
         results = [remote.recv() for remote in self.remotes]
         self.waiting = False
         obs, share_obs, rews, dones, infos, available_actions = zip(*results)
