@@ -56,11 +56,11 @@ class PettingZooMPEEnv:
         total_reward = sum([rew[agent] for agent in self.agents])
         rewards = [[total_reward]] * self.n_agents
         return (
-            self.unwrap(obs),
-            s_obs,
-            rewards,
-            self.unwrap(dones),
-            self.unwrap(info),
+            self.unwrap(obs),# list[n_agents,obs_dim]
+            s_obs,# list[n_agents,state_dim]
+            rewards,# list[n_agents,list[1]
+            self.unwrap(dones),# list[false,false,...]
+            self.unwrap(info),# list [{},{},...]
             self.get_avail_actions(),
         )
 
